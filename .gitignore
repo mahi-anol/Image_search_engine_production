@@ -210,8 +210,8 @@ image-search-prod-env/
 
 mlflow_cred.txt
 *_cred.txt
-data/
-checkpoint/
+/data
+/checkpoint
 logs/
 /checkpoint
 /checkpoints
