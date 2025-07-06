@@ -1,0 +1,12 @@
+data_spliting:
+  test_size: 0.2
+  random_state: 42
+
+train_arguments:
+  dataset_dir: data/processed  # or whatever folder you're using
+  batch_size: 32
+  num_worker: 0
+  epoch: 2
+  training_type: cross_entropy  # or triplet or contrastive
+  checkpoint_saving_gap: 1
+  loss_magin: 2.0

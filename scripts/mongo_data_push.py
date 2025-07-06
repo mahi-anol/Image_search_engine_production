@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-mongo_connection_string=os.getenv("MONGODB_URL")
+mongo_connection_string=os.getenv("MONGODB_connection_string")
 
 client=MongoClient(mongo_connection_string)
 db = client["image_database"]

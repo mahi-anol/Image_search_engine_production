@@ -1,0 +1,46 @@
+# updated dvc.yamlstages:
+stages:
+  data_ingestion:
+    cmd: python src/data/data_ingestion.py
+    deps:
+    - src/data/data_ingestion.py
+    - src/constants/__init__.py
+    outs:
+    - data/raw
+
+  data_spliting:
+    cmd: python src/data/data_spliting.py
+    deps:
+    - data/raw
+    - src/data/data_ingestion.py
+    params:
+    - data_spliting.test_size
+    - data_spliting.random_state
+    outs:
+    - data/interim
+
+  data_process:
+    cmd: python src/data/data_process.py
+    deps:
+    - data/interim
+    - src/data/data_spliting.py
+    - src/data/data_process.py
+    params:
+    - data_spliting.test_size
+    - data_spliting.random_state
+    outs:
+    - data/processed
+
+  model_training:
+    cmd: python src/model/model_train.py
+    deps:
+    - data/processed
+    - src/model/__init__.py
+    - src/features/features_for_triplet_loss.py
+    - src/features/features_for_cross_entropy_loss.py
+    - src/features/features_for_contrastive_loss.py
+    - src/utils/engine_for_contrastive_loss.py
+    - src/utils/engine_for_cross_entropy_loss.py
+    - src/utils/engine_for_triplet_loss.py
+    outs:
+    - checkpoints

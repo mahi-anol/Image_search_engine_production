@@ -1,0 +1,132 @@
+import torch
+import torch.nn as nn
+from torchvision import models
+import torch.optim as optim
+import argparse
+import os
+import shutil
+from src.logger import logging
+### Custom imports
+from src.model import return_model
+from src.utils.load_processed_data_artifacts import load_data_and_label
+from src.utils.model_artifacts import saving_model_with_state_and_logs
+from src.utils import engine_for_cross_entropy_loss
+from src.utils import  engine_for_contrastive_loss
+from src.utils import engine_for_triplet_loss
+from src.utils.custom_loss import triplet_loss
+from src.utils.custom_loss import contrastive_loss
+import src.features.features_for_triplet_loss as triplet_setup
+import src.features.features_for_contrastive_loss as contrastive_setup
+import src.features.features_for_cross_entropy_loss as cross_entropy_setup
+from src.utils.set_seeds import seed_everything
+from src.utils.get_parameters import load_params
+
+### setting random seed
+seed=42
+seed_everything(seed)
+config=load_params('params.yaml')['train_arguments']
+
+### remove previously existing checkpoint 
+
+checkpoint_folder = "./checkpoints"
+if os.path.exists(checkpoint_folder):
+    shutil.rmtree(checkpoint_folder)  # Deletes folder + contents
+    os.makedirs(checkpoint_folder)    # Recreate empty folder
+
+
+def train():
+    parser=argparse.ArgumentParser(description="Training Arguments")
+    parser.add_argument('--dataset_dir', type=str, default=config['dataset_dir'],help='Path to the folder which contains the dataset.')
+    parser.add_argument('--batch_size', type=int, default=config['batch_size'],help='Batch size for training the model.')
+    parser.add_argument('--num_worker', type=int, default=config['num_worker'],help='Number of workers for the dataset class.')
+    parser.add_argument('--epoch', type=int, default=config['epoch'],help='Number of training epoch')
+    parser.add_argument('--training_type', type=str, choices=['cross_entropy','contrastive','triplet'], default=config['training_type'],help='select type of training: cross_entropy/contrastive/triplet')
+    parser.add_argument('--checkpoint_saving_gap', type=int, default=config['checkpoint_saving_gap'],help='Save cheakpoint for every n epoch')
+
+
+    args=parser.parse_args()
+
+
+    ###base model and configs
+    data_path=args.dataset_dir
+    model_weights=models.MobileNet_V2_Weights.DEFAULT
+    auto_transforms=model_weights.transforms()
+    b_model=models.mobilenet_v2(weights=model_weights)
+    batch_size=args.batch_size
+    device='cuda' if torch.cuda.is_available() else 'cpu'
+
+    if os.name=='nt':
+        num_worker=0
+    else:
+        if args.num_worker<=os.cpu_count()-1:
+            num_worker=args.num_worker
+        else:
+            num_worker=os.cpu_count()-2
+
+    epochs=args.epoch
+
+    ### getting the data
+    train_data,train_label,test_data,test_label,le=load_data_and_label()
+
+    ### creating the dataset
+    if args.training_type=='cross_entropy':
+        train_dataset=cross_entropy_setup.create_dataset(train_data,train_label,auto_transforms)
+        test_dataset=cross_entropy_setup.create_dataset(test_data,test_label,auto_transforms)
+        ### create dataloaders
+        train_dataloader,test_dataloader=cross_entropy_setup.get_data_loaders(train_dataset,test_dataset,num_worker,batch_size=batch_size,seed=seed)
+
+    elif args.training_type=='contrastive':
+        train_dataset=contrastive_setup.create_dataset(train_data,train_label,auto_transforms)
+        test_dataset=contrastive_setup.create_dataset(test_data,test_label,auto_transforms)
+        ### create dataloaders
+        train_dataloader,test_dataloader=contrastive_setup.get_data_loaders(train_dataset,test_dataset,num_worker,batch_size=batch_size,seed=seed)
+
+    elif args.training_type=='triplet':
+        train_dataset=triplet_setup.create_dataset(train_data,train_label,auto_transforms)
+        test_dataset=triplet_setup.create_dataset(test_data,test_label,auto_transforms)
+        ### create dataloaders
+        train_dataloader,test_dataloader=triplet_setup.get_data_loaders(train_dataset,test_dataset,num_worker,batch_size=batch_size,seed=seed)
+    else:
+        pass
+
+    ### creating the final_model
+    number_of_class=len(le.classes_)
+    final_model=return_model(b_model,number_of_class)
+
+    ### Freeze layers for transfer learning. Take a look at model_builder.py for better architechtural and freeze intution for layers.
+    for param in final_model.base_model.features.parameters():
+        param.requires_grad=False
+
+
+    final_model.to(device)
+
+    ### creating optimizer and loss function
+    optimizer=optim.Adam(final_model.parameters(),lr=1e-4,weight_decay=1e-4)
+
+
+    if args.training_type=='cross_entropy':
+        logging.info(f"Starting Training with {args.training_type} loss")
+        loss_fn=nn.CrossEntropyLoss()
+        results=engine_for_cross_entropy_loss.train(final_model,train_dataloader,test_dataloader,optimizer,loss_fn,epochs,device,args.checkpoint_saving_gap)
+        logging.info(f"Finished Training with {args.training_type} loss")
+        # saving_model_with_state_and_logs(final_model,optimizer,results,"final_crossentropy_loss_trained_model.pt")
+
+    elif args.training_type=='contrastive':
+        logging.info(f"Starting Training with {args.training_type} loss")
+        loss_fn=contrastive_loss(margin=config['loss_margin'])
+        results=engine_for_contrastive_loss.train(final_model,train_dataloader,test_dataloader,optimizer,loss_fn,epochs,device,args.checkpoint_saving_gap)
+        logging.info(f"Finished Training with {args.training_type} loss")
+        # saving_model_with_state_and_logs(final_model,optimizer,results,"final_contrastive_loss_trained_model.pt")
+
+    elif args.training_type=='triplet':
+        logging.info(f"Starting Training with {args.training_type} loss")
+        loss_fn=triplet_loss(margin=config['loss_magin'])
+        results=engine_for_triplet_loss.train(final_model,train_dataloader,test_dataloader,optimizer,loss_fn,epochs,device,args.checkpoint_saving_gap)
+        logging.info(f"Finished Training with {args.training_type} loss")
+        # saving_model_with_state_and_logs(final_model,optimizer,results,"final_triplet_loss_trained_model.pt")
+    else:
+        pass
+
+
+if __name__=="__main__":
+    train()

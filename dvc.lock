@@ -1,0 +1,109 @@
+schema: '2.0'
+stages:
+  data_ingestion:
+    cmd: python src/data/data_ingestion.py
+    deps:
+    - path: src/constants/__init__.py
+      hash: md5
+      md5: 347e013980398f547e8415bbbb22f953
+      size: 236
+    - path: src/data/data_ingestion.py
+      hash: md5
+      md5: e93717b1fbd8ee55a3e428bf6fbd426c
+      size: 2120
+    outs:
+    - path: data/raw
+      hash: md5
+      md5: 03e35450e0991a3af1196c5fde99930e.dir
+      size: 337022598
+      nfiles: 3058
+  data_spliting:
+    cmd: python src/data/data_spliting.py
+    deps:
+    - path: data/raw
+      hash: md5
+      md5: 03e35450e0991a3af1196c5fde99930e.dir
+      size: 337022598
+      nfiles: 3058
+    - path: src/data/data_ingestion.py
+      hash: md5
+      md5: e93717b1fbd8ee55a3e428bf6fbd426c
+      size: 2120
+    params:
+      params.yaml:
+        data_spliting.random_state: 42
+        data_spliting.test_size: 0.2
+    outs:
+    - path: data/interim
+      hash: md5
+      md5: befd7442a07f14403ad5ba4b40374841.dir
+      size: 337022598
+      nfiles: 3058
+  data_process:
+    cmd: python src/data/data_process.py
+    deps:
+    - path: data/interim
+      hash: md5
+      md5: befd7442a07f14403ad5ba4b40374841.dir
+      size: 337022598
+      nfiles: 3058
+    - path: src/data/data_process.py
+      hash: md5
+      md5: 65f61bc4f9ad567026aca542ae80615c
+      size: 4922
+    - path: src/data/data_spliting.py
+      hash: md5
+      md5: 9ad8b6eeb5715a908aa841b0a7bb70c8
+      size: 2197
+    params:
+      params.yaml:
+        data_spliting.random_state: 42
+        data_spliting.test_size: 0.2
+    outs:
+    - path: data/processed
+      hash: md5
+      md5: 336d6beba8d0fde0d2280cc61079439c.dir
+      size: 68740461
+      nfiles: 620
+  model_training:
+    cmd: python src/model/model_train.py
+    deps:
+    - path: data/processed
+      hash: md5
+      md5: 336d6beba8d0fde0d2280cc61079439c.dir
+      size: 68740461
+      nfiles: 620
+    - path: src/features/features_for_contrastive_loss.py
+      hash: md5
+      md5: 984964ae102967c5f758af8b35e7a734
+      size: 4995
+    - path: src/features/features_for_cross_entropy_loss.py
+      hash: md5
+      md5: c4b7ca8a5a9b484c19d0104157088348
+      size: 2855
+    - path: src/features/features_for_triplet_loss.py
+      hash: md5
+      md5: 7c3b03c0ec99474866fbde6262fd50ca
+      size: 4861
+    - path: src/model/__init__.py
+      hash: md5
+      md5: f6e5f7eb92eac13d4994fbb45f3e6bb1
+      size: 1657
+    - path: src/utils/engine_for_contrastive_loss.py
+      hash: md5
+      md5: 4832b8f1ae05b462d86fbab2bfc75913
+      size: 3955
+    - path: src/utils/engine_for_cross_entropy_loss.py
+      hash: md5
+      md5: 825510926b375b4b97e7927627a69a79
+      size: 4470
+    - path: src/utils/engine_for_triplet_loss.py
+      hash: md5
+      md5: 693c6fa7fd01d650e16cdc8a3d9dc464
+      size: 4689
+    outs:
+    - path: checkpoints
+      hash: md5
+      md5: e192a342463c16970d89dc00fb120955.dir
+      size: 179521480
+      nfiles: 4

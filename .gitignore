@@ -209,5 +209,10 @@ __marimo__/
 image-search-prod-env/
 
 mlflow_cred.txt
-
+*_cred.txt
 data/
+checkpoint/
+logs/
+/checkpoint
+/checkpoints
+/local_S3
