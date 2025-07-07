@@ -27,9 +27,6 @@ load_dotenv()
 
 app = FastAPI()
 
-
-
-
 mongo_uri = os.getenv("MONGODB_connection_string")
 client = MongoDBClient(DATABASE_NAME)
 db=client.database
@@ -40,16 +37,19 @@ transform = transforms.Compose([
     transforms.ToTensor(),
 ])
 
-with open(CLASS_FILE, "r") as f:
-    classes = json.load(f)["classes"]
-num_classes = len(classes)
 
-weights = models.MobileNet_V2_Weights.DEFAULT
-base_model = models.mobilenet_v2(weights=weights)
-model = return_model(base_model, num_classes)
-model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE)['model'])
-model.to(DEVICE)
-model.eval()
+def get_embedding_model():
+    with open(CLASS_FILE, "r") as f:
+        classes = json.load(f)["classes"]
+    num_classes = len(classes)
+
+    weights = models.MobileNet_V2_Weights.DEFAULT
+    base_model = models.mobilenet_v2(weights=weights)
+    model = return_model(base_model, num_classes)
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE)['model'])
+    model.to(DEVICE)
+    model.eval()
+    return model
 
 # Load or initialize FAISS index and metadata
 if os.path.exists(INDEX_PATH):
@@ -66,6 +66,7 @@ def get_embedding(image_bytes,id=None):
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         tensor = transform(image).unsqueeze(0).to(DEVICE)
         with torch.inference_mode():
+            model=get_embedding_model()
             embedding = model(tensor)[0].cpu().numpy().astype('float32')
     except Exception as e:
         if id==None:
@@ -119,6 +120,7 @@ def build_index():
         all_embeddings, all_ids = [], []
         model.eval()
         with torch.inference_mode():
+            model=get_embedding_model()
             for imgs, id in dataloader:
                 imgs = imgs.to(DEVICE)
                 emb = model(imgs)[0].cpu().numpy().astype('float32')
