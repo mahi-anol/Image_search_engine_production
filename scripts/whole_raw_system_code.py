@@ -1,3 +1,8 @@
+####
+
+###         contains raw code logic which utilizes faiss vector store and trained embedding model for searching image and show results form mongoDB.
+
+####
 import os
 from pymongo import MongoClient
 import gridfs
@@ -164,7 +169,7 @@ def main():
         build_faiss_index(embeddings, paths, FAISS_INDEX_FILE, MAPPING_FILE)
 
     # Optional: Query and show top-k
-    query_image_path = r"E:\Image_search_engine_production\data\raw\Beds\0AJ1EAM5WZWTEQ_2.jpg"  # ← UPDATE THIS
+    query_image_path = r"./data/raw/Beds/0AJ1EAM5WZWTEQ_2.jpg"  # ← UPDATE THIS
     print("Querying image...")
     query_image_and_show_results(query_image_path, final_model, fs, FAISS_INDEX_FILE, MAPPING_FILE, TOP_K)
 
