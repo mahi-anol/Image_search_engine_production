@@ -8,7 +8,7 @@ def get_images_from_gridfs(fs, transform=None):
     cursor = fs.find()
     for file in cursor:
         try:
-            logging.info("Adding image with image id: %s which will be used for creating gridFS dataset",file._id)
+            logging.info("Adding image with image id: %s which will be used for creating gridFS dataset. [N.B: for vector store] ",file._id)
             img_bytes = file.read()
             image = Image.open(BytesIO(img_bytes)).convert('RGB')
             if transform:
