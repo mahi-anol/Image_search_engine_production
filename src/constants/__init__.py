@@ -17,6 +17,8 @@ BATCH_SIZE = 32
 
 ### others
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+###make dir if doesn't exists.
+os.makedirs('./faiss_index',exist_ok=True)
 INDEX_PATH = "./faiss_index/faiss_image_index.index"
 MAP_PATH = "./faiss_index/faiss_index_metadata_mapping.pkl"
 MODEL_PATH = "./checkpoints/cross_entropy_best.pt"
