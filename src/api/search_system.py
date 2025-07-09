@@ -52,7 +52,7 @@ transform = transforms.Compose([
     transforms.ToTensor(),
 ])
 
-
+### loading model with method
 # def get_embedding_model():
 #     logging.info("Loading model for inference...")
 #     try:
