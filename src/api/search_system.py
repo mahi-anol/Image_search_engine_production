@@ -338,3 +338,4 @@ async def search(file: UploadFile = File(...), top_k: int = 5):
 # You may need to set PYTHONPATH or ensure your modules are correctly structured.
 # Example:
 #   PYTHONPATH=. uvicorn src.api.search_system:app --reload
+
