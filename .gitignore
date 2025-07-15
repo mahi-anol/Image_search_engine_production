@@ -216,3 +216,4 @@ logs/
 /checkpoint
 /checkpoints
 /local_S3
+image.tar

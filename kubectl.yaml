@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-search
+  labels:
+    app: image-search
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: image-search
+  template:
+    metadata:
+      labels:
+        app: image-search
+    spec:
+      containers:
+      - name: image-search
+        image: 644726205307.dkr.ecr.eu-north-1.amazonaws.com/production/image-search/image-search:latest
+        ports:
+        - containerPort: 7192
+        resources:
+          requests:
+            memory: "3000Mi"
+            cpu: "1900m"
+          limits:
+            memory: "3500Mi"
+            cpu: "2"
+        # env:
+        # - name: image-search
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: capstone-secret
+        #       key: CAPSTONE_TEST
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: image-search-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: image-search
+  ports:
+    - name: http
+      protocol: TCP
+      port: 7192
+      targetPort: 7192
