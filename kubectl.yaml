@@ -47,3 +47,5 @@ spec:
       protocol: TCP
       port: 7192
       targetPort: 7192
+
+#eksctl create cluster --name image-search-cluster --region eu-north-1 --nodegroup-name image-search-nodes --node-type t3.medium --nodes 2 --nodes-min 1 --nodes-max 2 --managed

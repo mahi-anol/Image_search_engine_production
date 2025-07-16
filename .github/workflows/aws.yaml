@@ -1,4 +1,4 @@
-name: Deploy Application Docker Image to EC2 instance
+name: Deploy Image search on EKS (AWS kubernetes service)
 
 on:
   push:
@@ -37,6 +37,7 @@ jobs:
   Continuous-Deployment:
     needs: Continuous-Integration
     runs-on: self-hosted
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -48,10 +49,31 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+      # - name: Login to Amazon ECR
+      #   id: login-ecr
+      #   uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Run Docker Image to serve users
+      # - name: Run Docker Image to serve users
+      #   run: |
+      #     docker run -d \
+      #       -p 7192:7192 \
+      #       "${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPO }}:latest"
+
+      - name: Set Up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Update kubeconfig
         run: |
-         docker run -d -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" -e AWS_DEFAULT_REGION="${{ secrets.AWS_DEFAULT_REGION }}" -e MONGODB_URL="${{ secrets.MONGODB_URL }}" -p 7192:7192 "${{ steps.login-ecr.outputs.registry }}"/"${{ secrets.ECR_REPO }}":latest
+          aws eks update-kubeconfig --region eu-north-1 --name image-search-cluster
+
+      # - name: Create Kubernetes Secret
+      #   run: |
+      #     kubectl create secret generic capstone-secret \
+      #       --from-literal=CAPSTONE_TEST=${{ secrets.CAPSTONE_TEST }} \
+      #       --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy to EKS
+        run: |
+          kubectl apply -f kubectl.yaml
