@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: image-search
-        image: 644726205307.dkr.ecr.eu-north-1.amazonaws.com/production/image-search/image-search:latest
+        image: 644726205307.dkr.ecr.eu-north-1.amazonaws.com/production/image-search:latest
         ports:
         - containerPort: 7192
         resources:
