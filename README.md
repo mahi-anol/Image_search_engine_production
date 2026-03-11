@@ -31,14 +31,6 @@ Production Architecture:
 - Load-balanced across multiple pods for high availability
 - Horizontal scaling based on request volume
 
-Supported furniture classes:
-- Beds
-- Chairs
-- Dining room furniture
-- Sofas
-- Tables & Desks
-- Wardrobes & Closets
-
 ## System Architecture
 
 ![System Architecture Diagram](Assets/System-Diagram.svg)
@@ -222,7 +214,7 @@ Returns:
       {
         "image_id": "uuid",
         "similarity_score": 0.95,
-        "class": "Chairs"
+        "class": "category-name"
       }
     ],
     "search_time_ms": 125
@@ -236,7 +228,7 @@ Content-Type: multipart/form-data
 
 Parameters:
   file: Image file
-  class_name: Furniture class
+  class_name: Image category or label
 ```
 
 Get image metadata:
@@ -250,6 +242,8 @@ GET /health
 ```
 
 ## Training
+
+The model uses MobileNetV2 as the backbone with transfer learning. This allows the model to be trained on limited data while leveraging features learned from ImageNet.
 
 Three loss functions are available:
 
@@ -275,9 +269,13 @@ training_type: contrastive
 python src/model/model_train.py
 ```
 
-Models are saved to `checkpoints/` as:
-- `{loss_type}_best.pt` - Best model
-- `{loss_type}_last.pt` - Last epoch
+Training process:
+- Backbone: Pre-trained MobileNetV2 (ImageNet)
+- Fine-tune final layers with your image data
+- Adjust learning rate and epochs in params.yaml
+- Models are saved to checkpoints/:
+  - `{loss_type}_best.pt` - Best model
+  - `{loss_type}_last.pt` - Last epoch
 
 ## Deployment
 
